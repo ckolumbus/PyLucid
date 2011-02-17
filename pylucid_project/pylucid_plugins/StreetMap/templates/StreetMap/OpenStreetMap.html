@@ -33,27 +33,30 @@ function draw_osm_map(map_slug, lang_code, map_lon, map_lat, map_zoom, marker_ht
     }
 
     map.setCenter(transformed_lonlat(map_lon, map_lat), map_zoom);
-    var marker_center=transformed_lonlat(marker_lon, marker_lat)
+    if ( marker_lat != 10000 && marker_lon != 10000)
+    {
+	var marker_center=transformed_lonlat(marker_lon, marker_lat)
 
-    var size = new OpenLayers.Size(21, 25)
-    var icon = new OpenLayers.Icon('http://www.openlayers.org/api/img/marker.png',
-        size, offset= new OpenLayers.Pixel(-(size.w/2), -size.h)
-    );
-    var markers = new OpenLayers.Layer.Markers("Markers");
-    markers.addMarker(new OpenLayers.Marker(marker_center, icon));
-    map.addLayer(markers);
+	var size = new OpenLayers.Size(21, 25)
+	var icon = new OpenLayers.Icon('http://www.openlayers.org/api/img/marker.png',
+	    size, offset= new OpenLayers.Pixel(-(size.w/2), -size.h)
+	);
+	var markers = new OpenLayers.Layer.Markers("Markers");
+	markers.addMarker(new OpenLayers.Marker(marker_center, icon));
+	map.addLayer(markers);
 
-    if (marker_html) {
-		map.addPopup(
-		  new OpenLayers.Popup(
-		      id = "osm_popup_" + map_slug,
-			  lonlat = marker_center,
-			  size = new OpenLayers.Size(marker_width, marker_height),
-			  contentHTML = marker_html,
-			  closeBox = true
-		  )
-	   );
-	}
+	if (marker_html) {
+		    map.addPopup(
+		      new OpenLayers.Popup(
+			  id = "osm_popup_" + map_slug,
+			      lonlat = marker_center,
+			      size = new OpenLayers.Size(marker_width, marker_height),
+			      contentHTML = marker_html,
+			      closeBox = true
+		      )
+	       );
+	    }
+    }
 }
 </script>
 <!-- OpenStreetMap.html extrahead END -->
