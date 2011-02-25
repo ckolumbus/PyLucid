@@ -30,7 +30,7 @@ class UpdateJournal(BaseModel):
     content_type = models.ForeignKey(
         ContentType, verbose_name=_('content type'), related_name="content_type_set_for_%(class)s"
     )
-    object_url = models.URLField(verbose_name=_('object url'), help_text="absolute url to the item.",)
+    object_url = models.CharField(verbose_name=_('object url'), max_length=200, help_text="absolute url to the item.",)
 
     language = models.ForeignKey(Language)
 
