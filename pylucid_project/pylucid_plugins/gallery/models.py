@@ -31,8 +31,8 @@ class GalleryModel(UpdateInfoBaseModel):
     """
     pagetree = models.ForeignKey(PageTree, unique=True)
 
-    path = MediaPathModelField(max_length=256,
-        help_text=_("Base path after MEDIA_ROOT '%s'") % settings.MEDIA_ROOT
+    path = models.CharField(max_length=1024,
+        help_text=_("Base path (relative to MEDIA_ROOT '%s' or absolute)") % settings.MEDIA_ROOT
     )
 
     template = models.CharField(max_length=256,

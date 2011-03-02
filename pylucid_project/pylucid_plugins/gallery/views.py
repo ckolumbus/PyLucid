@@ -9,11 +9,16 @@
     :license: GNU GPL v3 or above, see LICENSE for more details.
 """
 
+import mimetypes
+from django.utils.http import http_date
 
 from fnmatch import fnmatch
 from glob import glob
 import os
 import posixpath
+
+from django.http import HttpResponse
+
 
 if __name__ == "__main__":
     # For doctest only
@@ -83,11 +88,16 @@ class Gallery(object):
         self.rel_path, self.rel_url = self.check_rest_url(rest_url)
 
         self.rel_base_path = self.config.path
-        self.abs_path = os.path.normpath(os.path.join(settings.MEDIA_ROOT, self.rel_base_path, self.rel_path))
+        #self.abs_path = os.path.normpath(os.path.join(settings.MEDIA_ROOT, self.rel_base_path, self.rel_path))
+        self.abs_path = os.path.normpath(os.path.join(self.rel_base_path, self.rel_path))
 
         is_dir = os.path.isdir(self.abs_path)
+        self.is_file = os.path.isfile(self.abs_path)
         is_in_root = self.abs_path.startswith(settings.MEDIA_ROOT)
-        if not is_dir or not is_in_root:
+        if self.is_file:
+            return
+        
+        if False: #not is_dir or not is_in_root:
             msg = _("Wrong path.")
             if settings.DEBUG or request.user.is_staff:
                 msg += " - path %r" % self.abs_path
@@ -97,7 +107,8 @@ class Gallery(object):
                     msg += " is not in media root."
             raise Http404(msg)
 
-        self.abs_base_url = posixpath.normpath(posixpath.join(settings.MEDIA_URL, self.rel_base_path, self.rel_path))
+        #self.abs_base_url = posixpath.normpath(posixpath.join(settings.MEDIA_URL, self.rel_base_path, self.rel_path))
+        self.abs_base_url  = posixpath.normpath(posixpath.join(self.gallery_base_url, self.rel_path))
 
         dirs, pictures, thumbs = self.read_dir(self.abs_path)
 
@@ -169,7 +180,7 @@ class Gallery(object):
                 dirs.append(item)
             elif os.path.isfile(abs_item_path):
                 if not _fnmatch_list(item, self.config.filename_whitelist):
-                    # Skip files witch are not in whitelist
+                    # Skip files which are not in whitelist
                     continue
 
                 cut_filename = _split_suffix(item, self.config.thumb_suffix_marker)
@@ -190,12 +201,15 @@ class Gallery(object):
         dir_info = []
         for dir in dirs:
             abs_sub_dir = os.path.join(self.abs_path, dir)
-            sub_pictures = self.read_dir(abs_sub_dir)[1]
+            res = self.read_dir(abs_sub_dir)
+            sub_dirs = res[0]
+            sub_pictures = res[1]
 
             dir_info.append({
                 "verbose_name": dir.replace("_", " "),
                 "href": "%s/" % posixpath.join(self.request.path, dir),
                 "pic_count": len(sub_pictures),
+                "dir_count": len(sub_dirs),
             })
 
         return dir_info
@@ -207,9 +221,13 @@ class Gallery(object):
             if not cut_filename:
                 cut_filename = os.path.splitext(picture)[0]
 
+            hiresLink = ""
+            if os.path.exists(os.path.join(self.abs_path, "hi-res", picture)):
+                 hiresLink = "<br /><a href=\""+ self.make_url(posixpath.join("hi-res", picture))+"\">Download Link</a>"
             info = {
                 "href": self.make_url(picture),
-                "verbose_name": cut_filename.replace("_", " "),
+		"verbose_name" : cut_filename.replace("_", " "),
+                "verbose_descr": cut_filename.replace("_", " ")+hiresLink
             }
 
             if cut_filename in thumbs:
@@ -223,6 +241,9 @@ class Gallery(object):
         return picture_info
 
     def render(self):
+        if self.is_file:
+            return self.render_file()
+
         context = {
             "a_rel_info": self.breadcrumbs[-1]["name"],
             "rel_path": self.rel_path,
@@ -235,6 +256,28 @@ class Gallery(object):
         return render_pylucid_response(self.request, self.config.template, context,
             context_instance=RequestContext(self.request)
         )
+
+    def render_file(self):
+        # ... create/load image here ...
+        # serialize to HTTP response
+        fullpath = self.abs_path
+        statobj = os.stat(fullpath)
+        mimetype, encoding = mimetypes.guess_type(fullpath)
+        mimetype = mimetype or 'application/octet-stream'
+
+        #TODO
+        #if not was_modified_since(request.META.get('HTTP_IF_MODIFIED_SINCE'),
+        #                          statobj[stat.ST_MTIME], statobj[stat.ST_SIZE]):
+        #        return HttpResponseNotModified(mimetype=mimetype)
+
+        contents = open(fullpath, 'rb').read()
+        response = HttpResponse(contents, mimetype=mimetype)
+        #TODO
+        #response["Last-Modified"] = http_date(statobj[stat.ST_MTIME])
+        #response["Content-Length"] = len(contents)
+        #if encoding:
+        #    response["Content-Encoding"] = encoding
+        return response
 
 
 def gallery(request, rest_url=""):
@@ -250,7 +293,7 @@ def gallery(request, rest_url=""):
 
     gallery = Gallery(request, config, rest_url)
 
-    if not request.is_ajax():
+    if not request.is_ajax() and not g.is_file:
         # FIXME: In Ajax request, only the page_content would be replaced, not the
         # breadcrumb links :(
         context = request.PYLUCID.context
