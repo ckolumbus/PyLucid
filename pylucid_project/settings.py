@@ -30,6 +30,7 @@ try:
     import django_tools
     import pylucid_project
     from pylucid_project.system.plugin_setup_info import PyLucidPluginSetupInfo
+    import cms
 except Exception, e:
     import traceback
     sys.stderr.write(traceback.format_exc())
@@ -132,6 +133,7 @@ TEMPLATE_DIRS = (
     os.path.join(os.path.abspath(os.path.dirname(django_tools.__file__)), "templates/"),
     os.path.join(os.path.abspath(os.path.dirname(dbpreferences.__file__)), "templates/"),
     os.path.join(os.path.abspath(os.path.dirname(django.__file__)), "contrib/admin/templates"),
+    os.path.join(os.path.abspath(os.path.dirname(cms.__file__)), "templates/"),
 )
 # Add all templates subdirs from all existing PyLucid plugins
 TEMPLATE_DIRS += PYLUCID_PLUGIN_SETUP_INFO.template_dirs
@@ -186,7 +188,7 @@ INSTALLED_APPS = (
     # PyLucid own apps:
     'pylucid_project.apps.pylucid',
     'pylucid_project.apps.pylucid_admin',
-    'pylucid_project.apps.pylucid_update', # Only needed for v0.8 users
+    #'pylucid_project.apps.pylucid_update', # Only needed for v0.8 users
 
     # external apps shipped and used with PyLucid:
     'dbpreferences',

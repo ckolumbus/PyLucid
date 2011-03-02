@@ -30,6 +30,8 @@ admin.autodiscover()
 
 
 urlpatterns = patterns('',
+    #url(r'^accounts/', include('django.contrib.auth.urls')),
+    url(r'^accounts/', include('cms.auth_urls')),
     #_____________________________________
     # PYLUCID UPDATE SECTION
     url('^%s/update/' % settings.ADMIN_URL_PREFIX, include('pylucid_update.urls')),
