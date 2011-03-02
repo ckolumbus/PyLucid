@@ -293,7 +293,7 @@ def gallery(request, rest_url=""):
 
     gallery = Gallery(request, config, rest_url)
 
-    if not request.is_ajax() and not g.is_file:
+    if not request.is_ajax() and not gallery.is_file:
         # FIXME: In Ajax request, only the page_content would be replaced, not the
         # breadcrumb links :(
         context = request.PYLUCID.context
